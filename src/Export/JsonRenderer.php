@@ -1,30 +1,50 @@
 <?php
 namespace AnwarSaeed\InvoiceProcessor\Export;
 
-use AnwarSaeed\InvoiceProcessor\Models\Invoice;
-
 class JsonRenderer
 {
-    public function render(Invoice $invoice): string
+    /**
+     * Render a single invoice to JSON
+     */
+    public function renderInvoice(array $invoiceData, ?array $customerData, array $itemsData): string
     {
         $data = [
-            'invoice_id' => $invoice->getId(),
-            'date' => $invoice->getDate()->format('Y-m-d'),
-            'customer' => [
-                'name' => $invoice->getCustomer()->getName(),
-                'address' => $invoice->getCustomer()->getAddress(),
-            ],
-            'items' => array_map(function($item) {
-                return [
-                    'product' => $item->getProduct()->getName(),
-                    'quantity' => $item->getQuantity(),
-                    'unit_price' => $item->getProduct()->getPrice(),
-                    'total' => $item->getTotal(),
-                ];
-            }, $invoice->getItems()),
-            'grand_total' => $invoice->getGrandTotal(),
+            'invoice' => $invoiceData,
+            'customer' => $customerData,
+            'items' => $itemsData
         ];
         
         return json_encode($data, JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * Render multiple invoices to JSON
+     */
+    public function renderInvoices(array $invoicesData): string
+    {
+        return json_encode($invoicesData, JSON_PRETTY_PRINT);
+    }
+
+    /**
+     * Render invoice details for API response
+     */
+    public function renderInvoiceDetails(array $invoiceData, ?array $customerData, array $itemsData): array
+    {
+        return [
+            'invoice' => $invoiceData,
+            'customer' => $customerData,
+            'items' => $itemsData
+        ];
+    }
+
+    /**
+     * Render paginated invoices for API response
+     */
+    public function renderPaginatedInvoices(array $invoicesData, array $metaData): array
+    {
+        return [
+            'data' => $invoicesData,
+            'meta' => $metaData
+        ];
     }
 }

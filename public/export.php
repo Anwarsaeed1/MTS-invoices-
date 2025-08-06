@@ -9,6 +9,7 @@ use AnwarSaeed\InvoiceProcessor\Repositories\{
     CustomerRepository,
     ProductRepository
 };
+use AnwarSaeed\InvoiceProcessor\Export\JsonRenderer;
 
 // Get format from query parameter
 $format = $_GET['format'] ?? 'json';
@@ -49,7 +50,8 @@ try {
     // Export based on format
     if ($format === 'json') {
         header('Content-Type: application/json');
-        echo json_encode($result, JSON_PRETTY_PRINT);
+        $renderer = new JsonRenderer();
+        echo $renderer->renderInvoices($result);
     } else {
         header('Content-Type: application/xml');
         

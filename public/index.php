@@ -37,42 +37,30 @@ $controllers = [
 // Configure router
 $router = new Router();
 
-// API Routes
+//Api routes
+// In public/index.php
+
 $router->add('GET', '/api/invoices', function() use ($controllers) {
-    header('Content-Type: application/json');
     $page = (int) ($_GET['page'] ?? 1);
     $perPage = (int) ($_GET['per_page'] ?? 20);
-    echo json_encode($controllers['invoice']->list($page, $perPage));
+    $controllers['invoice']->list($page, $perPage);
 });
 
 $router->add('GET', '/api/invoices/{id}', function(array $params) use ($controllers) {
-    header('Content-Type: application/json');
-    try {
-        echo json_encode($controllers['invoice']->show((int)$params['id']));
-    } catch (\RuntimeException $e) {
-        http_response_code(404);
-        echo json_encode(['error' => $e->getMessage()]);
-    }
+    $controllers['invoice']->show((int)$params['id']);
 });
-
 
 $router->add('POST', '/api/import', function() use ($controllers) {
-    header('Content-Type: application/json');
-    
-    try {
-
-        $data = json_decode(file_get_contents('php://input'), true);
-        
-        if (!isset($data['file_path'])) {
-            throw new \RuntimeException('file_path is required', 400);
-        }
-
-        echo json_encode($controllers['invoice']->import($data['file_path']));
-    } catch (\RuntimeException $e) {
-        http_response_code($e->getCode() ?: 500);
-        echo json_encode(['error' => $e->getMessage()]);
+    $data = json_decode(file_get_contents('php://input'), true);
+    if (!isset($data['file_path'])) {
+        http_response_code(400);
+        header('Content-Type: application/json');
+        echo json_encode(['error' => 'file_path is required']);
+        return;
     }
+    $controllers['invoice']->import($data['file_path']);
 });
+
 
 // Error handlers
 $router->addErrorHandler(404, function() {

@@ -6,6 +6,7 @@ use AnwarSaeed\InvoiceProcessor\Database\Connection;
 use AnwarSaeed\InvoiceProcessor\Repositories\InvoiceRepository;
 use AnwarSaeed\InvoiceProcessor\Repositories\CustomerRepository;
 use AnwarSaeed\InvoiceProcessor\Repositories\ProductRepository;
+use AnwarSaeed\InvoiceProcessor\Export\JsonRenderer;
 
 class ExportCommand
 {
@@ -74,7 +75,8 @@ class ExportCommand
     private function exportToJson(array $data): void
     {
         header('Content-Type: application/json');
-        echo json_encode($data, JSON_PRETTY_PRINT);
+        $renderer = new JsonRenderer();
+        echo $renderer->renderInvoices($data);
     }
 
     private function exportToXml(array $data): void

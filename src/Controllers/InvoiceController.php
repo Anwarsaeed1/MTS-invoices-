@@ -3,7 +3,7 @@ namespace AnwarSaeed\InvoiceProcessor\Controllers;
 
 use AnwarSaeed\InvoiceProcessor\Services\InvoiceService;
 use AnwarSaeed\InvoiceProcessor\Exceptions\{
-    InvoiceNotFoundException,
+    InvoiceNotFoundException, 
     ImportException
 };
 
@@ -11,29 +11,34 @@ class InvoiceController
 {
     public function __construct(private InvoiceService $invoiceService) {}
 
-    public function list(int $page = 1, int $perPage = 20): array
+    public function list(int $page = 1, int $perPage = 20): void
     {
-        return $this->invoiceService->getPaginatedInvoices($page, $perPage);
+        header('Content-Type: application/json');
+        echo json_encode($this->invoiceService->getPaginatedInvoices($page, $perPage));
     }
 
-    public function show(int $id): array
+    public function show(int $id): void
     {
+        header('Content-Type: application/json');
         try {
-            return $this->invoiceService->getInvoiceDetails($id);
+            echo json_encode($this->invoiceService->getInvoiceDetails($id));
         } catch (InvoiceNotFoundException $e) {
-            throw new \RuntimeException($e->getMessage(), 404);
+            http_response_code(404);
+            echo json_encode(['error' => $e->getMessage()]);
         }
     }
 
-    public function import(string $filePath): array
+    public function import(string $filePath): void
     {
+        header('Content-Type: application/json');
         try {
-            return [
+            echo json_encode([
                 'success' => true,
                 'data' => $this->invoiceService->importFromFile($filePath)
-            ];
+            ]);
         } catch (ImportException $e) {
-            throw new \RuntimeException($e->getMessage(), 400);
+            http_response_code(400);
+            echo json_encode(['error' => $e->getMessage()]);
         }
     }
 }

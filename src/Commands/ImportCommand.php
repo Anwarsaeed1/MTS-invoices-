@@ -52,7 +52,7 @@ class ImportCommand
 
     private function parseExcelFile(string $filePath): array
     {
-        // Mock implementation - in real scenario, use PhpSpreadsheet or Spout
+        // Mock implementation , i will use PhpSpreadsheet or other Excel reader if need data from this 
         return [
             [
                 'invoice' => 1,

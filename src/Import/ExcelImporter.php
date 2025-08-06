@@ -37,21 +37,55 @@ class ExcelImporter
 
     private function readExcel(string $filePath): array
     {
-        // Mock implementation - replace with real Excel reader
+        // Mock implementation , i will use PhpSpreadsheet or other Excel reader if need data from this 
         return [
             [
                 'invoice' => 1,
                 'Invoice Date' => 43831,
-                'Customer Name' => 'Idaline Mateuszczyk',
-                'Customer Address' => '95798 Fieldstone Point',
-                'Product Name' => 'Bread - Granary Small Pull',
-                'Qyantity' => 1,
-                'Price' => 10.5,
-                'Total' => 10.5,
-                'Grand Total' => 35.5
+                'Customer Name' => 'John Doe',
+                'Customer Address' => '123 Main St, City',
+                'Product Name' => 'Product A',
+                'Qyantity' => 2,
+                'Price' => 10.50,
+                'Total' => 21.00,
+                'Grand Total' => 21.00
             ],
+            [
+                'invoice' => 1,
+                'Invoice Date' => 43831,
+                'Customer Name' => 'John Doe',
+                'Customer Address' => '123 Main St, City',
+                'Product Name' => 'Product B',
+                'Qyantity' => 1,
+                'Price' => 15.00,
+                'Total' => 15.00,
+                'Grand Total' => 36.00
+            ],
+            [
+                'invoice' => 2,
+                'Invoice Date' => 43832,
+                'Customer Name' => 'Jane Smith',
+                'Customer Address' => '456 Oak Ave, Town',
+                'Product Name' => 'Product C',
+                'Qyantity' => 3,
+                'Price' => 8.00,
+                'Total' => 24.00,
+                'Grand Total' => 24.00
+            ],
+            [
+                'invoice' => 3,
+                'Invoice Date' => 43833,
+                'Customer Name' => 'Bob Johnson',
+                'Customer Address' => '789 Pine Rd, Village',
+                'Product Name' => 'Product D',
+                'Qyantity' => 1,
+                'Price' => 25.00,
+                'Total' => 25.00,
+                'Grand Total' => 25.00
+            ]
+    
+
             
-            // Add more mock data as needed
         ];
     }
 

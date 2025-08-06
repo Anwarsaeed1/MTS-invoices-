@@ -159,11 +159,7 @@ To use a different database, update the connection string in the relevant files.
 
 ## Excel Import
 
-The system includes a mock Excel parser. For production use, integrate with:
+The system includes a mock Excel parser with:
 - PhpSpreadsheet
 - Spout
 - Or implement a custom Excel reader
-
-## License
-
-This project is open source and available under the MIT License. 
