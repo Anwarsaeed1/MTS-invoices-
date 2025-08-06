@@ -1,0 +1,23 @@
+{
+    "name": "anwar_saeed/invoice-processor",
+    "description": "composer of invoice task",
+    "autoload": {
+            "psr-4": {
+                "AnwarSaeed\\InvoiceProcessor\\": "src/"
+            }
+        },
+        "autoload-dev": {
+            "psr-4": {
+                "AnwarSaeed\\InvoiceProcessor\\Tests\\": "tests/"
+            }
+        },
+    "authors": [
+        {
+            "name": "Anwar Mohamed",
+            "email": "anwarsaeedd11@gmail.com"
+        }
+    ],
+    "require-dev": {
+        "phpunit/phpunit": "9.5"
+    }
+}
