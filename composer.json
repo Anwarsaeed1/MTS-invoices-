@@ -21,6 +21,7 @@
         "phpunit/phpunit": "9.5"
     },
     "require": {
-        "phpoffice/phpspreadsheet": "^5.0"
+        "phpoffice/phpspreadsheet": "^5.0",
+        "mongodb/mongodb": "^2.1"
     }
 }

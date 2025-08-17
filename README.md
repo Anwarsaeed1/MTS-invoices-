@@ -7,9 +7,9 @@ A comprehensive PHP application demonstrating SOLID principles, design patterns,
 This application processes invoices from Excel files and provides flexible export options (JSON/XML). It demonstrates:
 
 - **SOLID Principles** - All five principles properly implemented
-- **Design Patterns** - Strategy, Factory, Repository, Command, Dependency Injection
+- **Design Patterns** - Strategy, Factory, Repository, Command, Dependency Injection, Adapter
 - **Excel Processing** - Professional Excel file reading using PhpSpreadsheet library
-- **Database Flexibility** - Support for SQLite, MySQL, PostgreSQL, MongoDB
+- **Truly Flexible Database Architecture** - Database-agnostic repositories with adapter pattern
 - **Clean Architecture** - Well-structured, testable, and maintainable code
 
 ##  Architecture Overview
@@ -28,12 +28,14 @@ This application processes invoices from Excel files and provides flexible expor
 - The system is open for extension but closed for modification
 - New export formats can be added by implementing `ExportStrategyInterface`
 - New import formats can be added by implementing `ImportStrategyInterface`
-- New database types can be added by implementing `ConnectionInterface`
+- New database types can be added by implementing `DatabaseAdapterInterface`
+- Repository code never needs to change when adding new databases
 
 #### 3. **Liskov Substitution Principle (LSP)**
 - All repository implementations can be substituted without breaking the application
-- `MongoDBCustomerRepository` can replace `CustomerRepository` seamlessly
-- Different database connections can be swapped using the factory pattern
+- `FlexibleCustomerRepository` works with any database adapter seamlessly
+- Different database adapters can be swapped without changing repository code
+- Same repository works with SQLite, MySQL, MongoDB, Redis, Neo4j, etc.
 
 #### 4. **Interface Segregation Principle (ISP)**
 - Interfaces are specific to client needs
@@ -58,17 +60,24 @@ This application processes invoices from Excel files and provides flexible expor
 - Supports SQLite, MySQL, PostgreSQL
 - Easy to extend for new database types
 
-### 3. **Repository Pattern**
+### 3. **Adapter Pattern**
+- **DatabaseAdapterInterface**: Abstracts database operations
+- **SqliteAdapter, MysqlAdapter, MongoDbAdapter**: Database-specific implementations
+- **FlexibleCustomerRepository**: Database-agnostic repository that works with any adapter
+- Eliminates need for database-specific repository names
+
+### 4. **Repository Pattern**
 - Abstract data access layer
 - `AbstractRepository` provides common functionality
-- Specific repositories implement domain-specific operations
+- `FlexibleCustomerRepository` works with any database adapter
+- No database-specific repository names needed
 
-### 4. **Command Pattern**
+### 5. **Command Pattern**
 - `CommandInterface` defines command contract
 - `CommandHandler` manages command execution
 - Easy to add new commands
 
-### 5. **Dependency Injection**
+### 6. **Dependency Injection**
 - `Container` manages all dependencies
 - Automatic resolution of dependencies
 - Singleton pattern for shared instances
@@ -88,10 +97,11 @@ invoice-processor/
 │   ├──  Contracts/          # Interfaces and contracts
 │   ├──  Core/               # Core framework classes
 │   ├──  Database/           # Database layer
+│   │   └──  Adapters/       # Database adapters (SqliteAdapter, MysqlAdapter, MongoDbAdapter)
 │   ├──  Export/             # Export strategies
 │   ├──  Import/             # Import strategies (PhpSpreadsheetReader)
 │   ├──  Models/             # Data models
-│   ├──  Repositories/       # Data access layer
+│   ├──  Repositories/       # Data access layer (FlexibleCustomerRepository)
 │   └──  Services/           # Business logic
 ├──  tests/                   # Unit tests
 ├──  vendor/                  # Composer dependencies
@@ -181,27 +191,13 @@ The `PhpSpreadsheetReader` class provides:
 
 ## 🔧 Usage Examples
 
-### Database Flexibility
+### Truly Flexible Database Architecture
 
-```php
-// SQLite (default)
-$container = new Container();
+The project now uses a **database-agnostic repository pattern** with adapters, eliminating the need for database-specific repository names.
 
-// MySQL
-$container->bind(ConnectionInterface::class, function () {
-    return ConnectionFactory::createMysql(
-        'localhost',
-        'invoice_db',
-        'username',
-        'password'
-    );
-});
 
-// MongoDB Repository
-$container->bind(CustomerRepositoryInterface::class, function () {
-    $mongoClient = new MongoDB\Client();
-    return new MongoDBCustomerRepository($mongoClient);
-});
+```
+
 ```
 
 ### Adding New Export Format
@@ -316,7 +312,10 @@ The refactoring addressed these specific issues:
 
 ## ✨ Key Improvements
 
+- ** Truly Flexible Database Architecture**: Database-agnostic repositories with adapter pattern
 - ** SOLID Principles**: All five principles properly implemented
+- ** Adapter Pattern**: Eliminates database-specific repository names
+- ** Database-Agnostic Code**: Same repository works with SQLite, MySQL, MongoDB, Redis, Neo4j, etc.
 - ** Design Patterns**: Strategy, Factory, Repository, Command, DI patterns
 - ** Interface Contracts**: Clear interfaces for all major components
 - ** Dependency Injection**: Automatic dependency resolution
