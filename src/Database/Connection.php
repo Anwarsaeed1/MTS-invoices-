@@ -1,7 +1,9 @@
 <?php
 namespace AnwarSaeed\InvoiceProcessor\Database;
 
-class Connection
+use AnwarSaeed\InvoiceProcessor\Contracts\Database\ConnectionInterface;
+
+class Connection implements ConnectionInterface
 {
     private \PDO $pdo;
     
@@ -51,5 +53,20 @@ class Connection
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);
         return $stmt;
+    }
+    
+    public function beginTransaction(): bool
+    {
+        return $this->pdo->beginTransaction();
+    }
+    
+    public function commit(): bool
+    {
+        return $this->pdo->commit();
+    }
+    
+    public function rollback(): bool
+    {
+        return $this->pdo->rollback();
     }
 }

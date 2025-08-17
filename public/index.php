@@ -3,35 +3,19 @@ declare(strict_types=1);
 
 require __DIR__.'/../vendor/autoload.php';
 
-use AnwarSaeed\InvoiceProcessor\Database\Connection;
+use AnwarSaeed\InvoiceProcessor\Core\Container;
 use AnwarSaeed\InvoiceProcessor\Core\Router;
 use AnwarSaeed\InvoiceProcessor\Controllers\InvoiceController;
-use AnwarSaeed\InvoiceProcessor\Services\InvoiceService;
-use AnwarSaeed\InvoiceProcessor\Repositories\{
-    InvoiceRepository,
-    CustomerRepository,
-    ProductRepository
-};
+use AnwarSaeed\InvoiceProcessor\Contracts\Services\InvoiceServiceInterface;
 
-// Initialize dependencies
-$connection = new Connection("sqlite:".__DIR__."/../database/invoices.db");
+// Initialize dependency injection container
+$container = new Container();
 
-$repositories = [
-    'invoice'   => new InvoiceRepository($connection),
-    'customer'  => new CustomerRepository($connection),
-    'product'   => new ProductRepository($connection)
-];
-
-$services = [
-    'invoice' => new InvoiceService(
-        $repositories['invoice'],
-        $repositories['customer'],
-        $repositories['product']
-    )
-];
+// Get services from container
+$invoiceService = $container->resolve(InvoiceServiceInterface::class);
 
 $controllers = [
-    'invoice' => new InvoiceController($services['invoice'])
+    'invoice' => new InvoiceController($invoiceService)
 ];
 
 // Configure router

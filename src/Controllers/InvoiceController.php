@@ -1,7 +1,7 @@
 <?php
 namespace AnwarSaeed\InvoiceProcessor\Controllers;
 
-use AnwarSaeed\InvoiceProcessor\Services\InvoiceService;
+use AnwarSaeed\InvoiceProcessor\Contracts\Services\InvoiceServiceInterface;
 use AnwarSaeed\InvoiceProcessor\Exceptions\{
     InvoiceNotFoundException, 
     ImportException
@@ -9,7 +9,7 @@ use AnwarSaeed\InvoiceProcessor\Exceptions\{
 
 class InvoiceController
 {
-    public function __construct(private InvoiceService $invoiceService) {}
+    public function __construct(private InvoiceServiceInterface $invoiceService) {}
 
     public function list(int $page = 1, int $perPage = 20): void
     {

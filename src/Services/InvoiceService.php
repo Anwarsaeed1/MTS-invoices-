@@ -1,22 +1,25 @@
 <?php
 namespace AnwarSaeed\InvoiceProcessor\Services;
 
-use AnwarSaeed\InvoiceProcessor\Repositories\{
-    InvoiceRepository,
-    CustomerRepository,
-    ProductRepository
+use AnwarSaeed\InvoiceProcessor\Contracts\Services\InvoiceServiceInterface;
+use AnwarSaeed\InvoiceProcessor\Contracts\Repositories\{
+    InvoiceRepositoryInterface,
+    CustomerRepositoryInterface,
+    ProductRepositoryInterface
 };
 use AnwarSaeed\InvoiceProcessor\Exceptions\{
     InvoiceNotFoundException,
     ImportException
 };
 
-class InvoiceService
+class InvoiceService implements InvoiceServiceInterface
 {
     public function __construct(
-        private InvoiceRepository $invoiceRepo,
-        private CustomerRepository $customerRepo,
-        private ProductRepository $productRepo
+        private InvoiceRepositoryInterface $invoiceRepo,
+        private CustomerRepositoryInterface $customerRepo,
+        private ProductRepositoryInterface $productRepo,
+        private ExportService $exportService,
+        private ImportService $importService
     ) {}
 
     public function getPaginatedInvoices(int $page = 1, int $perPage = 20): array
@@ -32,9 +35,14 @@ class InvoiceService
             throw new InvoiceNotFoundException("Invoice not found");
         }
 
-        $customer = $this->customerRepo->findById($invoice['customer_id']);
+        $customer = $this->customerRepo->findById($invoice->getCustomer()->getId());
         return [
-            'invoice' => $invoice,
+            'invoice' => [
+                'id' => $invoice->getId(),
+                'invoice_date' => $invoice->getDate()->format('Y-m-d'),
+                'customer_id' => $invoice->getCustomer()->getId(),
+                'grand_total' => $invoice->getGrandTotal()
+            ],
             'items' => $this->invoiceRepo->getItems($id),
             'customer' => $customer ? [
                 'id' => $customer->getId(),
@@ -46,68 +54,12 @@ class InvoiceService
 
     public function importFromFile(string $filePath): array
     {
-        try {
-            $data = $this->parseExcel($filePath);
-            return $this->processImport($data);
-        } catch (\Exception $e) {
-            throw new ImportException("Import failed: " . $e->getMessage());
-        }
+        return $this->importService->import($filePath);
     }
-
-    private function parseExcel(string $filePath): array
+    
+    public function exportInvoices(string $format = 'json'): string
     {
-        // Mock implementation - replace with real Excel reader
-        return [
-            [
-                'Invoice Date' => '2024-01-15',
-                'Customer Name' => 'John Doe',
-                'Customer Address' => '123 Main St',
-                'Product Name' => 'Product A',
-                'Qyantity' => 2,
-                'Price' => 10.50,
-                'Total' => 21.00,
-                'Grand Total' => 21.00
-            ]
-        ];
-    }
-
-    private function processImport(array $data): array
-    {
-        $results = [
-            'invoices' => 0,
-            'customers' => 0,
-            'products' => 0,
-            'items' => 0
-        ];
-
-        foreach ($data as $row) {
-            $customer = $this->customerRepo->findOrCreate(
-                $row['Customer Name'],
-                $row['Customer Address']
-            );
-            
-            $product = $this->productRepo->findOrCreate(
-                $row['Product Name'],
-                $row['Price']
-            );
-            
-            $invoiceId = $this->invoiceRepo->create([
-                'date' => $row['Invoice Date'],
-                'customer_id' => $customer->getId(),
-                'grand_total' => $row['Grand Total']
-            ]);
-            
-            $this->invoiceRepo->addItem($invoiceId, [
-                'product_id' => $product->getId(),
-                'quantity' => $row['Qyantity'],
-                'total' => $row['Total']
-            ]);
-            
-            $results['invoices']++;
-            $results['items']++;
-        }
-
-        return $results;
+        return $this->exportService->export($format);
     }
 
 }

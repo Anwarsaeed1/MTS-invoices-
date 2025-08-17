@@ -1,50 +1,75 @@
 <?php
 namespace AnwarSaeed\InvoiceProcessor\Repositories;
 
-use AnwarSaeed\InvoiceProcessor\Database\Connection;
+use AnwarSaeed\InvoiceProcessor\Contracts\Repositories\ProductRepositoryInterface;
 use AnwarSaeed\InvoiceProcessor\Models\Product;
 
-class ProductRepository
+class ProductRepository extends AbstractRepository implements ProductRepositoryInterface
 {
-    private Connection $connection;
+    protected string $table = 'products';
+    protected string $entityClass = Product::class;
 
-    /**
-     * Initializes a new instance of the ProductRepository class.
-     *
-     * @param Connection $connection The connection to the database.
-     */
-    public function __construct(Connection $connection)
+    public function __construct(\AnwarSaeed\InvoiceProcessor\Contracts\Database\ConnectionInterface $connection)
     {
-        $this->connection = $connection;
+        parent::__construct($connection);
     }
 
-    /**
-     * Finds a product by its name, or creates one if it doesn't exist.
-     *
-     * @param string $name The name of the product.
-     * @param float $price The price of the product.
-     *
-     * @return Product The product, either found or created.
-     */
     public function findOrCreate(string $name, float $price): Product
     {
-        $ex = $this->connection->execute(
-            "SELECT id, price FROM products WHERE name = ?",
+        $existingProduct = $this->findByName($name);
+        
+        if ($existingProduct) {
+            return $existingProduct;
+        }
+        
+        $product = new Product(null, $name, $price);
+        return $this->save($product);
+    }
+    
+    public function findByName(string $name): ?Product
+    {
+        $stmt = $this->connection->execute(
+            "SELECT * FROM {$this->table} WHERE name = ?",
             [$name]
         );
         
-        $data = $ex->fetch();
+        $data = $stmt->fetch();
         
-        if ($data) {
-            return new Product($data['id'], $name, $data['price']);
+        if (!$data) {
+            return null;
         }
         
-        $this->connection->execute(
-            "INSERT INTO products (name, price) VALUES (?, ?)",
-            [$name, $price]
-        );
+        return $this->createEntityFromData($data);
+    }
+    
+    public function save(object $entity): object
+    {
+        if (!($entity instanceof Product)) {
+            throw new \InvalidArgumentException('Entity must be a Product instance');
+        }
         
-        $id = $this->connection->getPdo()->lastInsertId();
-        return new Product($id, $name, $price);
+        if ($entity->getId()) {
+            // Update existing product
+            $this->connection->execute(
+                "UPDATE {$this->table} SET name = ?, price = ? WHERE id = ?",
+                [$entity->getName(), $entity->getPrice(), $entity->getId()]
+            );
+            return $entity;
+        } else {
+            // Create new product
+            $this->connection->execute(
+                "INSERT INTO {$this->table} (name, price) VALUES (?, ?)",
+                [$entity->getName(), $entity->getPrice()]
+            );
+            
+            $id = $this->connection->getPdo()->lastInsertId();
+            $entity->setId($id);
+            return $entity;
+        }
+    }
+    
+    protected function createEntityFromData(array $data): object
+    {
+        return new Product($data['id'], $data['name'], $data['price']);
     }
 }

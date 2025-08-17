@@ -1,11 +1,18 @@
 <?php
 namespace AnwarSaeed\InvoiceProcessor\Repositories;
 
-use AnwarSaeed\InvoiceProcessor\Database\Connection;
+use AnwarSaeed\InvoiceProcessor\Contracts\Repositories\InvoiceRepositoryInterface;
+use AnwarSaeed\InvoiceProcessor\Models\Invoice;
 
-class InvoiceRepository
+class InvoiceRepository extends AbstractRepository implements InvoiceRepositoryInterface
 {
-    public function __construct(private Connection $connection) {}
+    protected string $table = 'invoices';
+    protected string $entityClass = Invoice::class;
+
+    public function __construct(\AnwarSaeed\InvoiceProcessor\Contracts\Database\ConnectionInterface $connection)
+    {
+        parent::__construct($connection);
+    }
 
     /**
      * Paginates the list of invoices.
@@ -15,7 +22,7 @@ class InvoiceRepository
      * @return array The paginated invoice data, including the invoices and pagination metadata.
      */
 
-    public function paginate(int $page, int $perPage): array
+    public function paginate(int $page = 1, int $perPage = 20): array
     {
         $offset = ($page - 1) * $perPage;
         
@@ -38,27 +45,10 @@ class InvoiceRepository
         ];
     }
 
-    /**
-     * Finds an invoice by its ID.
-     *
-     * @param int $id The ID of the invoice to find.
-     * @return array|null The invoice data as an associative array, or null if not found.
-     */
-    public function findById(int $id): ?array
+    public function findById(int $id): ?object
     {
-         
-        $invoice = $this->connection->execute("
-            SELECT * FROM invoices WHERE id = ?
-        ", [$id])->fetch();
-        
-        if (!$invoice) {
-            return null;
-        }
-        
-        // Remove numeric keys from single row
-        return array_filter($invoice, function($key) {
-            return is_string($key);
-        }, ARRAY_FILTER_USE_KEY);
+        $result = parent::findById($id);
+        return $result instanceof Invoice ? $result : null;
     }
 
     
@@ -99,51 +89,47 @@ class InvoiceRepository
         return $this->connection->getPdo()->lastInsertId();
     }
 
-    /**
-     * Adds an item to an invoice.
-     *
-     * @param int $invoiceId The ID of the invoice to which the item is to be added.
-     * @param array $itemData An associative array containing item details with keys 
-     *                        'product_id', 'quantity', and 'total'.
-     * @return void
-     */
-    public function addItem(int $invoiceId, array $itemData): void
+    public function addItem(int $invoiceId, array $itemData): bool
     {
         $this->connection->execute("
             INSERT INTO invoice_items (invoice_id, product_id, quantity, total)
             VALUES (?, ?, ?, ?)
         ", [$invoiceId, $itemData['product_id'], $itemData['quantity'], $itemData['total']]);
+        
+        return true;
     }
 
-    /**
-     * Saves an Invoice object to the database.
-     *
-     * @param \AnwarSaeed\InvoiceProcessor\Models\Invoice $invoice The invoice to save.
-     * @return int The ID of the saved invoice.
-     */
-    public function save(\AnwarSaeed\InvoiceProcessor\Models\Invoice $invoice): int
+    public function save(object $entity): object
     {
-        $this->connection->execute("
-            INSERT INTO invoices (invoice_date, customer_id, grand_total)
-            VALUES (?, ?, ?)
-        ", [
-            $invoice->getDate()->format('Y-m-d'),
-            $invoice->getCustomer()->getId(),
-            $invoice->getGrandTotal()
-        ]);
-
-        $invoiceId = $this->connection->getPdo()->lastInsertId();
-        
-        // Save invoice items
-        foreach ($invoice->getItems() as $item) {
-            $this->addItem($invoiceId, [
-                'product_id' => $item->getProduct()->getId(),
-                'quantity' => $item->getQuantity(),
-                'total' => $item->getTotal()
-            ]);
+        if (!($entity instanceof Invoice)) {
+            throw new \InvalidArgumentException('Entity must be an Invoice instance');
         }
-
-        return $invoiceId;
+        
+        if ($entity->getId()) {
+            // Update existing invoice
+            $this->connection->execute(
+                "UPDATE {$this->table} SET invoice_date = ?, customer_id = ?, grand_total = ? WHERE id = ?",
+                [$entity->getDate()->format('Y-m-d'), $entity->getCustomer()->getId(), $entity->getGrandTotal(), $entity->getId()]
+            );
+            return $entity;
+        } else {
+            // Create new invoice
+            $this->connection->execute(
+                "INSERT INTO {$this->table} (invoice_date, customer_id, grand_total) VALUES (?, ?, ?)",
+                [$entity->getDate()->format('Y-m-d'), $entity->getCustomer()->getId(), $entity->getGrandTotal()]
+            );
+            
+            $id = $this->connection->getPdo()->lastInsertId();
+            $entity->setId($id);
+            return $entity;
+        }
+    }
+    
+    protected function createEntityFromData(array $data): object
+    {
+        // This is a simplified implementation - you might need to load customer and items
+        $customer = new \AnwarSaeed\InvoiceProcessor\Models\Customer($data['customer_id'], '', '');
+        return new Invoice($data['id'], new \DateTime($data['invoice_date']), $customer, $data['grand_total']);
     }
 
     /**

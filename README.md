@@ -1,165 +1,234 @@
-# Invoice Processor
+# Invoice Processor - SOLID Principles Implementation
 
-A PHP-based invoice processing system that can import data from Excel files and export to JSON/XML formats.
+This project demonstrates a comprehensive implementation of SOLID principles and design patterns in PHP. The application has been refactored to address tight coupling, improve flexibility, and implement proper separation of concerns.
 
-## Features
+## Architecture Overview
 
-- Import invoice data from Excel files
-- Export data to JSON and XML formats
-- RESTful API endpoints
-- Command-line interface
-- SQLite database with flexible design for other DBMS
-- PSR-compliant code following SOLID principles
+### SOLID Principles Implementation
 
-## ERD (Entity Relationship Diagram)
+#### 1. **Single Responsibility Principle (SRP)**
+- Each class has a single, well-defined responsibility
+- `ExportService` handles only export operations
+- `ImportService` handles only import operations
+- `InvoiceService` orchestrates business logic
+- Repositories handle only data access
+- Etc 
+
+
+#### 2. **Open/Closed Principle (OCP)**
+- The system is open for extension but closed for modification
+- New export formats can be added by implementing `ExportStrategyInterface`
+- New import formats can be added by implementing `ImportStrategyInterface`
+- New database types can be added by implementing `ConnectionInterface`
+
+#### 3. **Liskov Substitution Principle (LSP)**
+- All repository implementations can be substituted without breaking the application
+- `MongoDBCustomerRepository` can replace `CustomerRepository` seamlessly
+- Different database connections can be swapped using the factory pattern
+
+#### 4. **Interface Segregation Principle (ISP)**
+- Interfaces are specific to client needs
+- `CustomerRepositoryInterface` extends `RepositoryInterface` with customer-specific methods
+- `ExportStrategyInterface` focuses only on export operations
+
+#### 5. **Dependency Inversion Principle (DIP)**
+- High-level modules depend on abstractions, not concretions
+- Services depend on repository interfaces, not concrete implementations
+- Commands depend on service interfaces, not concrete services
+- Dependency injection container manages all dependencies
+
+## Design Patterns Implemented
+
+### 1. **Strategy Pattern**
+- **Export Strategies**: `JsonExportStrategy`, `XmlExportStrategy`
+- **Import Strategies**: `ExcelImportStrategy`
+- Allows easy addition of new formats without modifying existing code
+
+### 2. **Factory Pattern**
+- **ConnectionFactory**: Creates different database connections
+- Supports SQLite, MySQL, PostgreSQL
+- Easy to extend for new database types
+
+### 3. **Repository Pattern**
+- Abstract data access layer
+- `AbstractRepository` provides common functionality
+- Specific repositories implement domain-specific operations
+
+### 4. **Command Pattern**
+- `CommandInterface` defines command contract
+- `CommandHandler` manages command execution
+- Easy to add new commands
+
+### 5. **Dependency Injection**
+- `Service Container with Class name Container` manages all dependencies
+- Automatic resolution of dependencies
+- Singleton pattern for shared instances
+
+##  Project Structure
 
 ```
-┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│  customers  │    │  invoices   │    │  products   │
-├─────────────┤    ├─────────────┤    ├─────────────┤
-│ id (PK)     │    │ id (PK)     │    │ id (PK)     │
-│ name        │    │ invoice_date│    │ name        │
-│ address     │    │ customer_id │    │ price       │
-└─────────────┘    │ grand_total │    └─────────────┘
-                   └─────────────┘           │
-                          │                  │
-                          │                  │
-                   ┌─────────────┐           │
-                   │invoice_items│           │
-                   ├─────────────┤           │
-                   │ id (PK)     │           │
-                   │ invoice_id  │◄──────────┘
-                   │ product_id  │
-                   │ quantity    │
-                   │ total       │
-                   └─────────────┘
+src/
+├── Contracts/                    # Interfaces (DIP)
+│   ├── Commands/
+│   ├── Database/
+│   ├── Export/
+│   ├── Import/
+│   ├── Repositories/
+│   └── Services/
+├── Core/                        # Core infrastructure
+│   ├── Container.php           # DI Container
+│   ├── CommandHandler.php      # Command pattern
+│   └── Database/
+│       └── ConnectionFactory.php
+├── Database/                    # Database implementations
+│   └── Connection.php
+├── Export/                      # Export strategies
+│   ├── JsonExportStrategy.php
+│   └── XmlExportStrategy.php
+├── Import/                      # Import strategies
+│   └── ExcelImportStrategy.php
+├── Models/                      # Domain models
+├── Repositories/                # Repository implementations
+│   ├── AbstractRepository.php
+│   ├── CustomerRepository.php
+│   ├── InvoiceRepository.php
+│   ├── ProductRepository.php
+│   └── MongoDBCustomerRepository.php
+├── Services/                    # Business logic services
+│   ├── ExportService.php
+│   ├── ImportService.php
+│   └── InvoiceService.php
+└── Commands/                    # CLI commands
+    ├── ExportCommand.php
+    └── ImportCommand.php
 ```
 
-## Installation
+##  Usage Examples
 
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   composer install
-   ```
-3. Create the database:
-   ```bash
-   sqlite3 database/invoices.db < database/schema.sql
-   ```
+### Database Flexibility
 
-## Usage
+```php
+// SQLite (default)
+$container = new Container();
 
-### Command Line Interface
+// MySQL
+$container->bind(ConnectionInterface::class, function () {
+    return ConnectionFactory::createMysql(
+        'localhost',
+        'invoice_db',
+        'username',
+        'password'
+    );
+});
 
-#### Import Excel Data
+// MongoDB Repository
+$container->bind(CustomerRepositoryInterface::class, function () {
+    $mongoClient = new MongoDB\Client();
+    return new MongoDBCustomerRepository($mongoClient);
+});
+```
+
+### Adding New Export Format
+
+```php
+class CsvExportStrategy implements ExportStrategyInterface
+{
+    public function export(array $data): string
+    {
+        // CSV export implementation
+    }
+    
+    public function getContentType(): string
+    {
+        return 'text/csv';
+    }
+    
+    public function getFileExtension(): string
+    {
+        return 'csv';
+    }
+}
+
+// Register the new strategy
+$exportService = $container->resolve(ExportService::class);
+$exportService->registerStrategy('csv', new CsvExportStrategy());
+```
+
+### Adding New Import Format
+
+```php
+class CsvImportStrategy implements ImportStrategyInterface
+{
+    public function import(string $filePath): array
+    {
+        // CSV import implementation
+    }
+    
+    public function canHandle(string $filePath): bool
+    {
+        return pathinfo($filePath, PATHINFO_EXTENSION) === 'csv';
+    }
+    
+    public function getSupportedExtensions(): array
+    {
+        return ['csv'];
+    }
+}
+
+// Register the new strategy
+$importService = $container->resolve(ImportService::class);
+$importService->registerStrategy(new CsvImportStrategy());
+```
+
+## CLI Commands
+
 ```bash
+# Export invoices to JSON
+php bin/console export json
+
+# Export invoices to XML
+php bin/console export xml
+
+# Import from Excel file
 php bin/console import data.xlsx
 ```
 
-#### Export Data
-```bash
-# Export to JSON
-php bin/console export json
+##  Testing
 
-# Export to XML
-php bin/console export xml
-```
-
-### Web Interface
-
-### Serve This Project
---- php -S localhost:8000 -t public
-
-#### API Endpoints
-
-- `GET /api/invoices` - List invoices with pagination
-- `GET /api/invoices/{id}` - Get specific invoice details
-- `POST /api/import` - Import data from file
-
-#### Export via Web
-
-- `GET /export.php?format=json` - Export to JSON
-- `GET /export.php?format=xml` - Export to XML
-
-### Example API Usage
+The application includes comprehensive tests demonstrating the flexibility:
 
 ```bash
-# List invoices
-curl http://localhost/api/invoices
-
-# Get specific invoice
-curl http://localhost/api/invoices/1
-
-# Export to JSON
-curl http://localhost/export.php?format=json
+# Run tests
+vendor/bin/phpunit
 ```
 
-## Project Structure
+##  Benefits of This Architecture
 
-```
-invoice-processor/
-├── bin/
-│   └── console                 # Command line interface
-├── database/
-│   ├── invoices.db            # SQLite database
-│   └── schema.sql             # Database schema
-├── public/
-│   ├── index.php              # Main API entry point
-│   └── export.php             # Web export script
-├── src/
-│   ├── Commands/              # Command line commands
-│   ├── Controllers/           # API controllers
-│   ├── Core/                  # Core framework
-│   ├── Database/              # Database connection
-│   ├── Exceptions/            # Custom exceptions
-│   ├── Export/                # Export functionality
-│   ├── Import/                # Import functionality
-│   ├── Models/                # Domain models
-│   ├── Repositories/          # Data access layer
-│   └── Services/              # Business logic
-├── tests/                     # PHPUnit tests
-├── vendor/                    # Composer dependencies
-├── composer.json
-├── phpunit.xml
-└── README.md
-```
+1. **Flexibility**: Easy to switch between different databases, export formats, and import formats
+2. **Maintainability**: Clear separation of concerns and single responsibilities
+3. **Testability**: Dependencies are injected and can be easily mocked
+4. **Extensibility**: New features can be added without modifying existing code
+5. **Scalability**: Architecture supports growth and complexity
 
-## Design Patterns Used
+## Migration from Old Architecture
 
-1. **Repository Pattern** - Data access abstraction
-2. **Service Layer Pattern** - Business logic encapsulation
-3. **Dependency Injection** - Loose coupling
-4. **Command Pattern** - CLI commands
-5. **Factory Pattern** - Object creation
+The refactoring addressed these specific issues:
 
-## SOLID Principles
+1. **Tight Coupling**: Commands were directly instantiating repositories and database connections
+2. **LSP Violations**: No interface contracts for repositories and services
+3. **DIP Violations**: High-level modules depended on concrete implementations
+4. **Poor Flexibility**: Hard to switch databases or add new export/import formats
+5. **Missing Patterns**: No use of proven design patterns for common problems
 
-- **Single Responsibility** - Each class has one reason to change
-- **Open/Closed** - Open for extension, closed for modification
-- **Liskov Substitution** - Subtypes are substitutable
-- **Interface Segregation** - Clients depend on specific interfaces
-- **Dependency Inversion** - High-level modules don't depend on low-level modules
+## Key Improvements
 
-## Testing
+- **SOLID Principles**: All five principles properly implemented
+- **Design Patterns**: Strategy, Factory, Repository, Command, DI patterns
+- **Interface Contracts**: Clear interfaces for all major components
+- **Dependency Injection**: Automatic dependency resolution
+- **Database Flexibility**: Easy to switch between SQLite, MySQL, PostgreSQL, MongoDB
+- **Format Flexibility**: Easy to add new export/import formats
+- **Testability**: All components can be easily unit tested
+- **Maintainability**: Clear separation of concerns and responsibilities
 
-Run tests with PHPUnit:
-
-```bash
-./vendor/bin/phpunit
-```
-
-## Database Flexibility
-
-The application uses PDO for database operations, making it compatible with:
-- SQLite
-- any Database
-
-
-To use a different database, update the connection string in the relevant files.
-
-## Excel Import
-
-The system includes a mock Excel parser with:
-- PhpSpreadsheet
-- Spout
-- Or implement a custom Excel reader
+This refactored architecture provides a solid foundation for a scalable, maintainable, and flexible invoice processing system.

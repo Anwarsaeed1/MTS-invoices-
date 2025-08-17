@@ -1,43 +1,45 @@
 #!/usr/bin/env php
 <?php
 
-require __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
+use AnwarSaeed\InvoiceProcessor\Core\Container;
+use AnwarSaeed\InvoiceProcessor\Core\CommandHandler;
+use AnwarSaeed\InvoiceProcessor\Commands\ExportCommand;
 use AnwarSaeed\InvoiceProcessor\Commands\ImportCommand;
 
-if ($argc < 2) {
+// Create container and resolve dependencies
+$container = new Container();
+
+// Create command handler
+$commandHandler = new CommandHandler();
+
+// Register commands with dependency injection
+$commandHandler->registerCommand(new ExportCommand(
+    $container->resolve(\AnwarSaeed\InvoiceProcessor\Contracts\Services\InvoiceServiceInterface::class)
+));
+
+$commandHandler->registerCommand(new ImportCommand(
+    $container->resolve(\AnwarSaeed\InvoiceProcessor\Contracts\Services\InvoiceServiceInterface::class)
+));
+
+// Parse command line arguments
+$args = $argv;
+$scriptName = array_shift($args);
+$commandName = $args[0] ?? null;
+$commandArgs = array_slice($args, 1);
+
+if (!$commandName) {
     echo "Available commands:\n";
-    echo "  import <file_path>  - Import data from Excel file\n";
-    echo "  export <format>     - Export data to JSON/XML (format: json|xml)\n";
+    foreach ($commandHandler->getAvailableCommands() as $name => $description) {
+        echo "  {$name}: {$description}\n";
+    }
     exit(1);
 }
 
-$command = $argv[1];
-
 try {
-    switch ($command) {
-        case 'import':
-            $importCommand = new ImportCommand();
-            $importCommand->execute(array_slice($argv, 1));
-            break;
-            
-        case 'export':
-            if ($argc < 3) {
-                echo "Usage: php bin/console export <format>\n";
-                echo "Formats: json, xml\n";
-                exit(1);
-            }
-            $format = $argv[2];
-            $exportCommand = new \AnwarSaeed\InvoiceProcessor\Commands\ExportCommand();
-            $exportCommand->execute([$format]);
-            break;
-            
-        default:
-            echo "Unknown command: $command\n";
-            echo "Available commands: import, export\n";
-            exit(1);
-    }
-} catch (Exception $e) {
+    $commandHandler->execute($commandName, $commandArgs);
+} catch (\Exception $e) {
     echo "Error: " . $e->getMessage() . "\n";
     exit(1);
 }
