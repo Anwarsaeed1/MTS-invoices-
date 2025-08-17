@@ -8,7 +8,7 @@ This application processes invoices from Excel files and provides flexible expor
 
 - **SOLID Principles** - All five principles properly implemented
 - **Design Patterns** - Strategy, Factory, Repository, Command, Dependency Injection
-- **Excel Processing** - Native PHP Excel file reading without third-party dependencies
+- **Excel Processing** - Professional Excel file reading using PhpSpreadsheet library
 - **Database Flexibility** - Support for SQLite, MySQL, PostgreSQL, MongoDB
 - **Clean Architecture** - Well-structured, testable, and maintainable code
 
@@ -22,7 +22,7 @@ This application processes invoices from Excel files and provides flexible expor
 - `ImportService` handles only import operations
 - `InvoiceService` orchestrates business logic
 - Repositories handle only data access
-- `RealExcelReader` handles only Excel file parsing
+- `PhpSpreadsheetReader` handles only Excel file parsing
 
 #### 2. **Open/Closed Principle (OCP)**
 - The system is open for extension but closed for modification
@@ -50,7 +50,7 @@ This application processes invoices from Excel files and provides flexible expor
 
 ### 1. **Strategy Pattern**
 - **Export Strategies**: `JsonExportStrategy`, `XmlExportStrategy`
-- **Import Strategies**: `ExcelImportStrategy` with `RealExcelReader`
+- **Import Strategies**: `ExcelImportStrategy` with `PhpSpreadsheetReader`
 - Allows easy addition of new formats without modifying existing code
 
 ### 2. **Factory Pattern**
@@ -89,7 +89,7 @@ invoice-processor/
 │   ├──  Core/               # Core framework classes
 │   ├──  Database/           # Database layer
 │   ├──  Export/             # Export strategies
-│   ├──  Import/             # Import strategies
+│   ├──  Import/             # Import strategies (PhpSpreadsheetReader)
 │   ├──  Models/             # Data models
 │   ├──  Repositories/       # Data access layer
 │   └──  Services/           # Business logic
@@ -121,12 +121,12 @@ cd invoice-processor
 ```
 
 2. **Install dependencies**
-```bash
-composer install
-```
+   ```bash
+   composer install
+   ```
 
 3. **Setup database**
-```bash
+   ```bash
 php database/setup.php
 ```
 
@@ -146,19 +146,38 @@ php bin/console export xml
 
 ## 📊 Excel Import Features
 
-### Native Excel Processing
-- **No third-party dependencies** - Uses native PHP for Excel file reading
-- **Multiple strategies** - ZipArchive, system commands, or manual parsing
-- **Error handling** - Graceful fallbacks for missing extensions
-- **Typo tolerance** - Handles common column name variations
+### Professional Excel Processing with PhpSpreadsheet
+- **PhpSpreadsheet Library** - Industry-standard Excel processing library
+- **Robust Error Handling** - Comprehensive validation and error messages
+- **Memory Management** - Proper cleanup to prevent memory leaks
+- **Flexible Header Detection** - Handles typos and column name variations
+- **Professional API** - Uses industry-standard PhpSpreadsheet methods
 
 ### Supported Excel Features
-- ✅ `.xlsx` files (Excel 2007+)
-- ✅ `.xls` files (legacy Excel)
-- ✅ `.csv` files (comma-separated values)
-- ✅ Date conversion from Excel format
-- ✅ Automatic column detection
-- ✅ Error handling and validation
+-  `.xlsx` files (Excel 2007+)
+-  `.xls` files (legacy Excel)
+-  `.csv` files (comma-separated values)
+-  `.ods` files (OpenDocument Spreadsheet)
+-  Automatic date conversion from Excel format
+-  Professional cell value formatting
+-  Comprehensive error handling and validation
+-  Memory-efficient processing for large files
+
+### PhpSpreadsheet Implementation Benefits
+- **🔧 Professional Library** - Industry-standard Excel processing
+- **⚡ Performance** - Optimized for large Excel files
+- **🛡️ Reliability** - Comprehensive error handling and validation
+- **📅 Date Handling** - Automatic Excel date conversion
+- **🧹 Memory Management** - Proper resource cleanup
+- **🔍 Flexible Headers** - Handles column name variations and typos
+
+### Technical Implementation
+The `PhpSpreadsheetReader` class provides:
+- **File Validation** - Checks file existence and supported formats
+- **Header Detection** - Flexible column name matching with typo tolerance
+- **Data Processing** - Efficient row-by-row processing with memory management
+- **Date Conversion** - Automatic Excel timestamp to PHP date conversion
+- **Error Handling** - Comprehensive validation and clear error messages
 
 ## 🔧 Usage Examples
 
@@ -282,8 +301,8 @@ vendor/bin/phpunit --testsuite Database
 3. ** Testability**: Dependencies are injected and can be easily mocked
 4. ** Extensibility**: New features can be added without modifying existing code
 5. ** Scalability**: Architecture supports growth and complexity
-6. ** Excel Processing**: Native PHP Excel reading without external dependencies
-7. ** Error Handling**: Robust error handling and fallback mechanisms
+6. ** Excel Processing**: Professional Excel reading using PhpSpreadsheet library
+7. ** Error Handling**: Robust error handling and validation
 
 ## 🔄 Migration from Old Architecture
 
@@ -303,7 +322,7 @@ The refactoring addressed these specific issues:
 - ** Dependency Injection**: Automatic dependency resolution
 - ** Database Flexibility**: Easy to switch between SQLite, MySQL, PostgreSQL, MongoDB
 - ** Format Flexibility**: Easy to add new export/import formats
-- ** Excel Processing**: Native PHP Excel file reading
+- ** Excel Processing**: Professional Excel file reading using PhpSpreadsheet
 - ** Testability**: All components can be easily unit tested
 - ** Maintainability**: Clear separation of concerns and responsibilities
 - ** Clean Code**: No unnecessary files, proper structure

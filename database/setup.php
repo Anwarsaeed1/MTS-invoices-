@@ -27,22 +27,22 @@ class DatabaseSetup
      */
     public function setup(): void
     {
-        echo "🗄️ Setting up database: {$this->dbPath}\n";
+        echo " Setting up database: {$this->dbPath}\n";
         
         try {
             $this->createTables();
             $this->createIndexes();
             $this->verifySetup();
             
-            echo "✅ Database setup completed successfully!\n";
-            echo "📊 Tables created:\n";
+            echo " Database setup completed successfully!\n";
+            echo " Tables created:\n";
             echo "   - customers\n";
             echo "   - products\n";
             echo "   - invoices\n";
             echo "   - invoice_items\n";
             
         } catch (Exception $e) {
-            echo "❌ Database setup failed: " . $e->getMessage() . "\n";
+            echo " Database setup failed: " . $e->getMessage() . "\n";
             throw $e;
         }
     }
@@ -62,7 +62,7 @@ class DatabaseSetup
                 address TEXT NOT NULL
             )
         ");
-        echo "   ✅ customers table created\n";
+        echo "    customers table created\n";
 
         // Create products table
         $this->connection->execute("
@@ -72,7 +72,7 @@ class DatabaseSetup
                 price DECIMAL(10,2) NOT NULL
             )
         ");
-        echo "   ✅ products table created\n";
+        echo "products table created\n";
 
         // Create invoices table
         $this->connection->execute("
@@ -84,7 +84,7 @@ class DatabaseSetup
                 FOREIGN KEY (customer_id) REFERENCES customers(id)
             )
         ");
-        echo "   ✅ invoices table created\n";
+        echo "invoices table created\n";
 
         // Create invoice_items table
         $this->connection->execute("
@@ -98,7 +98,7 @@ class DatabaseSetup
                 FOREIGN KEY (product_id) REFERENCES products(id)
             )
         ");
-        echo "   ✅ invoice_items table created\n";
+        echo "    invoice_items table created\n";
     }
 
     /**
@@ -106,7 +106,7 @@ class DatabaseSetup
      */
     private function createIndexes(): void
     {
-        echo "🔍 Creating indexes...\n";
+        echo "Creating indexes...\n";
 
         // Indexes for better query performance
         $this->connection->execute("
@@ -133,7 +133,7 @@ class DatabaseSetup
             CREATE INDEX IF NOT EXISTS idx_invoice_items_product_id ON invoice_items(product_id)
         ");
 
-        echo "   ✅ Indexes created\n";
+        echo "Indexes created\n";
     }
 
     /**
@@ -141,7 +141,7 @@ class DatabaseSetup
      */
     private function verifySetup(): void
     {
-        echo "🔍 Verifying setup...\n";
+        echo "Verifying setup...\n";
 
         $tables = ['customers', 'products', 'invoices', 'invoice_items'];
         
@@ -155,7 +155,7 @@ class DatabaseSetup
                 throw new Exception("Table '{$table}' was not created successfully");
             }
             
-            echo "   ✅ Table '{$table}' verified\n";
+            echo "    Table '{$table}' verified\n";
         }
     }
 
@@ -186,7 +186,7 @@ class DatabaseSetup
         $this->connection->execute("DELETE FROM products");
         $this->connection->execute("DELETE FROM customers");
         
-        echo "   ✅ All data cleared\n";
+        echo "    All data cleared\n";
     }
 }
 
@@ -196,7 +196,7 @@ if (php_sapi_name() === 'cli') {
     $setup->setup();
     
     $stats = $setup->getStats();
-    echo "\n📊 Database Statistics:\n";
+    echo "\n Database Statistics:\n";
     foreach ($stats as $table => $count) {
         echo "   {$table}: {$count} records\n";
     }

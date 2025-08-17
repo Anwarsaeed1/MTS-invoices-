@@ -14,47 +14,31 @@ class ExcelImportStrategy implements ImportStrategyInterface
      */
     public function import(string $filePath): array
     {
-        $reader = new RealExcelReader($filePath);
+        $reader = new PhpSpreadsheetReader();
         
-        // Validate the file structure
-        $reader->validate();
-        
-        // Read the data
-        $data = $reader->read();
+        // Read the data using PhpSpreadsheet
+        $data = $reader->read($filePath);
         
         // Process and clean the data
         $processedData = [];
         foreach ($data as $row) {
             $processedData[] = [
-                'invoice' => (int)$row['invoice'],
-                'Invoice Date' => $this->convertExcelDate($row['Invoice Date']),
-                'Customer Name' => trim($row['Customer Name']),
-                'Customer Address' => trim($row['Customer Address']),
-                'Product Name' => trim($row['Product Name']),
-                'Quantity' => (int)($row['Quantity'] ?? $row['Qyantity'] ?? 0),
-                'Price' => (float)$row['Price'],
-                'Total' => (float)$row['Total'],
-                'Grand Total' => (float)$row['Grand Total']
+                'invoice' => (int)($row['invoice'] ?? 0),
+                'Invoice Date' => $row['invoice_date'] ?? '',
+                'Customer Name' => trim($row['customer_name'] ?? ''),
+                'Customer Address' => trim($row['customer_address'] ?? ''),
+                'Product Name' => trim($row['product_name'] ?? ''),
+                'Quantity' => (int)($row['quantity'] ?? $row['qyantity'] ?? 0), // Handle typo
+                'Price' => (float)($row['price'] ?? 0),
+                'Total' => (float)($row['total'] ?? 0),
+                'Grand Total' => (float)($row['grand_total'] ?? 0)
             ];
         }
         
         return $processedData;
     }
     
-    /**
-     * Convert Excel date to PHP date
-     */
-    private function convertExcelDate($excelDate): string
-    {
-        if (is_numeric($excelDate)) {
-            // Excel dates are number of days since 1900-01-01
-            $unixTimestamp = ($excelDate - 25569) * 86400;
-            return date('Y-m-d', $unixTimestamp);
-        }
-        
-        // If it's already a string date, return as is
-        return $excelDate;
-    }
+
     
     /**
      * Check if the strategy can handle the given file.
