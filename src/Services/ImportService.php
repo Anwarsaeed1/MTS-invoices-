@@ -101,7 +101,7 @@ class ImportService
             
             $this->invoiceRepository->addItem($currentInvoice, [
                 'product_id' => $product->getId(),
-                'quantity' => $row['Qyantity'],
+                'quantity' => $row['Quantity'],
                 'total' => $row['Total']
             ]);
             
@@ -112,11 +112,16 @@ class ImportService
         return $results;
     }
 
-    private function convertExcelDate(int $excelDate): string
+    private function convertExcelDate($excelDate): string
     {
-        $date = \DateTime::createFromFormat('Y-m-d', '1899-12-30')
-            ->add(new \DateInterval("P{$excelDate}D"));
+        if (is_numeric($excelDate)) {
+            // Excel dates are number of days since 1900-01-01
+            $date = \DateTime::createFromFormat('Y-m-d', '1899-12-30')
+                ->add(new \DateInterval("P{$excelDate}D"));
+            return $date->format('Y-m-d');
+        }
         
-        return $date->format('Y-m-d');
+        // If it's already a string date, return as is
+        return $excelDate;
     }
 }

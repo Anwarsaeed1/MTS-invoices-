@@ -1,0 +1,50 @@
+# PHPUnit
+.phpunit.result.cache
+.phpunit.cache/
+
+# Composer
+/vendor/
+composer.phar
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Database files (if you want to exclude them)
+# database/*.db
+# database/*.sqlite
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Cache files
+cache/
+*.cache
+
+# Test artifacts
+tests/data/
+coverage/

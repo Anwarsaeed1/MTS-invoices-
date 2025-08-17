@@ -1,8 +1,18 @@
 # Invoice Processor - SOLID Principles Implementation
 
-This project demonstrates a comprehensive implementation of SOLID principles and design patterns in PHP. The application has been refactored to address tight coupling, improve flexibility, and implement proper separation of concerns.
+A comprehensive PHP application demonstrating SOLID principles, design patterns, and best practices for invoice processing. This project includes Excel import functionality, flexible export options, and a clean, maintainable architecture.
 
-## Architecture Overview
+## 🎯 Project Overview
+
+This application processes invoices from Excel files and provides flexible export options (JSON/XML). It demonstrates:
+
+- **SOLID Principles** - All five principles properly implemented
+- **Design Patterns** - Strategy, Factory, Repository, Command, Dependency Injection
+- **Excel Processing** - Native PHP Excel file reading without third-party dependencies
+- **Database Flexibility** - Support for SQLite, MySQL, PostgreSQL, MongoDB
+- **Clean Architecture** - Well-structured, testable, and maintainable code
+
+##  Architecture Overview
 
 ### SOLID Principles Implementation
 
@@ -12,8 +22,7 @@ This project demonstrates a comprehensive implementation of SOLID principles and
 - `ImportService` handles only import operations
 - `InvoiceService` orchestrates business logic
 - Repositories handle only data access
-- Etc 
-
+- `RealExcelReader` handles only Excel file parsing
 
 #### 2. **Open/Closed Principle (OCP)**
 - The system is open for extension but closed for modification
@@ -41,7 +50,7 @@ This project demonstrates a comprehensive implementation of SOLID principles and
 
 ### 1. **Strategy Pattern**
 - **Export Strategies**: `JsonExportStrategy`, `XmlExportStrategy`
-- **Import Strategies**: `ExcelImportStrategy`
+- **Import Strategies**: `ExcelImportStrategy` with `RealExcelReader`
 - Allows easy addition of new formats without modifying existing code
 
 ### 2. **Factory Pattern**
@@ -60,50 +69,98 @@ This project demonstrates a comprehensive implementation of SOLID principles and
 - Easy to add new commands
 
 ### 5. **Dependency Injection**
-- `Service Container with Class name Container` manages all dependencies
+- `Container` manages all dependencies
 - Automatic resolution of dependencies
 - Singleton pattern for shared instances
 
 ##  Project Structure
 
 ```
-src/
-├── Contracts/                    # Interfaces (DIP)
-│   ├── Commands/
-│   ├── Database/
-│   ├── Export/
-│   ├── Import/
-│   ├── Repositories/
-│   └── Services/
-├── Core/                        # Core infrastructure
-│   ├── Container.php           # DI Container
-│   ├── CommandHandler.php      # Command pattern
-│   └── Database/
-│       └── ConnectionFactory.php
-├── Database/                    # Database implementations
-│   └── Connection.php
-├── Export/                      # Export strategies
-│   ├── JsonExportStrategy.php
-│   └── XmlExportStrategy.php
-├── Import/                      # Import strategies
-│   └── ExcelImportStrategy.php
-├── Models/                      # Domain models
-├── Repositories/                # Repository implementations
-│   ├── AbstractRepository.php
-│   ├── CustomerRepository.php
-│   ├── InvoiceRepository.php
-│   ├── ProductRepository.php
-│   └── MongoDBCustomerRepository.php
-├── Services/                    # Business logic services
-│   ├── ExportService.php
-│   ├── ImportService.php
-│   └── InvoiceService.php
-└── Commands/                    # CLI commands
-    ├── ExportCommand.php
-    └── ImportCommand.php
+invoice-processor/
+├──  bin/                     # Command line tools
+│   └── console                 # Main CLI entry point
+├──  database/                # Database setup and files
+│   └── setup.php              # Database initialization
+├──  public/                  # Web interface
+│   └── index.php              # Web entry point
+├──  src/                     # Main application code
+│   ├──  Commands/           # CLI commands
+│   ├──  Contracts/          # Interfaces and contracts
+│   ├──  Core/               # Core framework classes
+│   ├──  Database/           # Database layer
+│   ├──  Export/             # Export strategies
+│   ├──  Import/             # Import strategies
+│   ├──  Models/             # Data models
+│   ├──  Repositories/       # Data access layer
+│   └──  Services/           # Business logic
+├──  tests/                   # Unit tests
+├──  vendor/                  # Composer dependencies
+├──  .gitignore              # Git ignore rules
+├──  composer.json           # Project dependencies
+├──  composer.lock           # Locked dependency versions
+├──  data.xlsx               # Sample Excel data
+├──  erd.md                  # Database design documentation
+├──  MTS-invoice-erd.png     # ERD diagram
+├──  phpunit.xml             # PHPUnit configuration
+└──  README.md               # Project documentation
 ```
 
-##  Usage Examples
+## 🚀 Quick Start
+
+### Prerequisites
+- PHP 8.0+
+- Composer
+- SQLite (or MySQL/x)
+
+### Installation
+
+1. **Clone the repository**
+```bash
+git clone <repository-url>
+cd invoice-processor
+```
+
+2. **Install dependencies**
+```bash
+composer install
+```
+
+3. **Setup database**
+```bash
+php database/setup.php
+```
+
+4. **Import sample data**
+```bash
+php bin/console import data.xlsx
+```
+
+5. **Export data**
+```bash
+# Export to JSON
+php bin/console export json
+
+# Export to XML
+php bin/console export xml
+```
+
+## 📊 Excel Import Features
+
+### Native Excel Processing
+- **No third-party dependencies** - Uses native PHP for Excel file reading
+- **Multiple strategies** - ZipArchive, system commands, or manual parsing
+- **Error handling** - Graceful fallbacks for missing extensions
+- **Typo tolerance** - Handles common column name variations
+
+### Supported Excel Features
+- ✅ `.xlsx` files (Excel 2007+)
+- ✅ `.xls` files (legacy Excel)
+- ✅ `.csv` files (comma-separated values)
+- ✅ Date conversion from Excel format
+- ✅ Automatic column detection
+- ✅ Error handling and validation
+
+## 🔧 Usage Examples
 
 ### Database Flexibility
 
@@ -192,43 +249,62 @@ php bin/console export xml
 # Import from Excel file
 php bin/console import data.xlsx
 ```
+## Web Interface
+
+Access the web interface to view and export data:
+
+```bash
+# Start PHP development server
+php -S localhost:8000 -t public
+
+# Visit in browser
+http://localhost:8000
+```
 
 ##  Testing
 
-The application includes comprehensive tests demonstrating the flexibility:
+The application includes comprehensive tests:
 
 ```bash
-# Run tests
+# Run all tests
 vendor/bin/phpunit
+
+# Run specific test suite
+vendor/bin/phpunit --testsuite Import
+vendor/bin/phpunit --testsuite Services
+vendor/bin/phpunit --testsuite Database
 ```
 
 ##  Benefits of This Architecture
 
-1. **Flexibility**: Easy to switch between different databases, export formats, and import formats
-2. **Maintainability**: Clear separation of concerns and single responsibilities
-3. **Testability**: Dependencies are injected and can be easily mocked
-4. **Extensibility**: New features can be added without modifying existing code
-5. **Scalability**: Architecture supports growth and complexity
+1. ** Flexibility**: Easy to switch between different databases, export formats, and import formats
+2. ** Maintainability**: Clear separation of concerns and single responsibilities
+3. ** Testability**: Dependencies are injected and can be easily mocked
+4. ** Extensibility**: New features can be added without modifying existing code
+5. ** Scalability**: Architecture supports growth and complexity
+6. ** Excel Processing**: Native PHP Excel reading without external dependencies
+7. ** Error Handling**: Robust error handling and fallback mechanisms
 
-## Migration from Old Architecture
+## 🔄 Migration from Old Architecture
 
 The refactoring addressed these specific issues:
 
-1. **Tight Coupling**: Commands were directly instantiating repositories and database connections
-2. **LSP Violations**: No interface contracts for repositories and services
-3. **DIP Violations**: High-level modules depended on concrete implementations
-4. **Poor Flexibility**: Hard to switch databases or add new export/import formats
-5. **Missing Patterns**: No use of proven design patterns for common problems
+1. ** Tight Coupling**: Commands were directly instantiating repositories and database connections
+2. ** LSP Violations**: No interface contracts for repositories and services
+3. ** DIP Violations**: High-level modules depended on concrete implementations
+4. ** Poor Flexibility**: Hard to switch databases or add new export/import formats
+5. ** Missing Patterns**: No use of proven design patterns for common problems
 
-## Key Improvements
+## ✨ Key Improvements
 
-- **SOLID Principles**: All five principles properly implemented
-- **Design Patterns**: Strategy, Factory, Repository, Command, DI patterns
-- **Interface Contracts**: Clear interfaces for all major components
-- **Dependency Injection**: Automatic dependency resolution
-- **Database Flexibility**: Easy to switch between SQLite, MySQL, PostgreSQL, MongoDB
-- **Format Flexibility**: Easy to add new export/import formats
-- **Testability**: All components can be easily unit tested
-- **Maintainability**: Clear separation of concerns and responsibilities
+- ** SOLID Principles**: All five principles properly implemented
+- ** Design Patterns**: Strategy, Factory, Repository, Command, DI patterns
+- ** Interface Contracts**: Clear interfaces for all major components
+- ** Dependency Injection**: Automatic dependency resolution
+- ** Database Flexibility**: Easy to switch between SQLite, MySQL, PostgreSQL, MongoDB
+- ** Format Flexibility**: Easy to add new export/import formats
+- ** Excel Processing**: Native PHP Excel file reading
+- ** Testability**: All components can be easily unit tested
+- ** Maintainability**: Clear separation of concerns and responsibilities
+- ** Clean Code**: No unnecessary files, proper structure
 
-This refactored architecture provides a solid foundation for a scalable, maintainable, and flexible invoice processing system.
