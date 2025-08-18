@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 require __DIR__.'/../vendor/autoload.php';
 
+// Load environment dynamically from .env file
+use AnwarSaeed\InvoiceProcessor\Core\DynamicEnvironmentLoader;
+$envLoader = new DynamicEnvironmentLoader();
+
 use AnwarSaeed\InvoiceProcessor\Core\Container;
 use AnwarSaeed\InvoiceProcessor\Core\Router;
 use AnwarSaeed\InvoiceProcessor\Controllers\InvoiceController;

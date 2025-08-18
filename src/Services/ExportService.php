@@ -52,15 +52,19 @@ class ExportService
 
     private function prepareData(): array
     {
-        $invoices = $this->invoiceRepository->paginate(1, 1000)['data'];
+        $invoices = $this->invoiceRepository->paginate(1, 1000);
         $result = [];
 
         foreach ($invoices as $invoice) {
-            $items = $this->invoiceRepository->getItems($invoice['id']);
-            $customer = $this->customerRepository->findById($invoice['customer_id']);
+            $items = $this->invoiceRepository->getItems($invoice->getId());
+            $customer = $this->customerRepository->findById($invoice->getCustomer()->getId());
             
             $result[] = [
-                'invoice' => $invoice,
+                'invoice' => [
+                    'id' => $invoice->getId(),
+                    'date' => $invoice->getDate()->format('Y-m-d'),
+                    'grand_total' => $invoice->getGrandTotal()
+                ],
                 'customer' => $customer ? [
                     'id' => $customer->getId(),
                     'name' => $customer->getName(),

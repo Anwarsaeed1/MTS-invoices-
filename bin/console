@@ -1,4 +1,3 @@
-#!/usr/bin/env php
 <?php
 
 require_once __DIR__ . '/../vendor/autoload.php';
@@ -7,6 +6,8 @@ use AnwarSaeed\InvoiceProcessor\Core\Container;
 use AnwarSaeed\InvoiceProcessor\Core\CommandHandler;
 use AnwarSaeed\InvoiceProcessor\Commands\ExportCommand;
 use AnwarSaeed\InvoiceProcessor\Commands\ImportCommand;
+use AnwarSaeed\InvoiceProcessor\Commands\SwitchDatabaseCommand;
+use AnwarSaeed\InvoiceProcessor\Commands\SetupDatabaseCommand;
 
 // Create container and resolve dependencies
 $container = new Container();
@@ -23,11 +24,21 @@ $commandHandler->registerCommand(new ImportCommand(
     $container->resolve(\AnwarSaeed\InvoiceProcessor\Contracts\Services\InvoiceServiceInterface::class)
 ));
 
+$commandHandler->registerCommand(new SwitchDatabaseCommand());
+$commandHandler->registerCommand(new SetupDatabaseCommand());
+
 // Parse command line arguments
 $args = $argv;
 $scriptName = array_shift($args);
 $commandName = $args[0] ?? null;
-$commandArgs = array_slice($args, 1);
+$commandArgs = [];
+
+// Parse command arguments for switch-database command
+if ($commandName === 'switch-database' && isset($args[1])) {
+    $commandArgs['database'] = $args[1];
+} else {
+    $commandArgs = array_slice($args, 1);
+}
 
 if (!$commandName) {
     echo "Available commands:\n";

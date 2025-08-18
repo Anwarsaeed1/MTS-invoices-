@@ -35,8 +35,8 @@ class MysqlAdapter implements DatabaseAdapterInterface
         $offset = ($page - 1) * $perPage;
         
         $stmt = $this->connection->execute(
-            "SELECT * FROM {$table} LIMIT ? OFFSET ?",
-            [$perPage, $offset]
+            "SELECT * FROM {$table} LIMIT {$perPage} OFFSET {$offset}",
+            []
         );
         
         return $stmt->fetchAll();

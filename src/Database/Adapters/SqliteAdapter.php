@@ -110,4 +110,5 @@ class SqliteAdapter implements DatabaseAdapterInterface
     {
         return $this->connection->rollback();
     }
+    
 }

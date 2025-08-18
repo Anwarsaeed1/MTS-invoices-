@@ -1,18 +1,78 @@
 # Invoice Processor - SOLID Principles Implementation
 
-A comprehensive PHP application demonstrating SOLID principles, design patterns, and best practices for invoice processing. This project includes Excel import functionality, flexible export options, and a clean, maintainable architecture.
+A comprehensive PHP application demonstrating SOLID principles, design patterns, and best practices for invoice processing. This project includes Excel import functionality, flexible export options, and a **truly dynamic database architecture** that supports SQLite, MySQL, and MongoDB.
 
-## 🎯 Project Overview
+## Project Overview
 
 This application processes invoices from Excel files and provides flexible export options (JSON/XML). It demonstrates:
 
 - **SOLID Principles** - All five principles properly implemented
 - **Design Patterns** - Strategy, Factory, Repository, Command, Dependency Injection, Adapter
 - **Excel Processing** - Professional Excel file reading using PhpSpreadsheet library
-- **Truly Flexible Database Architecture** - Database-agnostic repositories with adapter pattern
+- **Dynamic Database Architecture** - Automatic database setup and switching between SQLite, MySQL, and MongoDB
 - **Clean Architecture** - Well-structured, testable, and maintainable code
 
-##  Architecture Overview
+## Dynamic Database Setup
+
+The application now supports **automatic database setup** based on your `.env` configuration. You can easily switch between SQLite, MySQL, and MongoDB without manual setup.
+
+### Supported Databases
+
+1. **SQLite** - File-based database (default)
+2. **MySQL** - Relational database
+3. **MongoDB** - NoSQL document database
+
+### Quick Setup
+
+```bash
+# Setup database based on current .env configuration
+php bin/console setup-database
+
+# Switch to MySQL and setup
+php bin/console switch-database mysql
+php bin/console setup-database
+
+# Switch to MongoDB and setup
+php bin/console switch-database mongodb
+php bin/console setup-database
+```
+
+### Environment Configuration
+
+Copy `env.example` to `.env` and configure your preferred database:
+
+```env
+# For SQLite (default)
+DB_TYPE=sqlite
+DB_DATABASE=invoices
+
+# For MySQL
+DB_TYPE=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_DATABASE=invoices
+DB_USERNAME=root
+DB_PASSWORD=
+
+# For MongoDB
+DB_TYPE=mongodb
+DB_HOST=localhost
+DB_PORT=27017
+DB_DATABASE=invoices
+DB_USERNAME=
+DB_PASSWORD=
+```
+
+### Features
+
+- **Automatic database creation** - Creates databases if they don't exist
+- **Automatic table/collection creation** - Sets up all required tables/collections
+- **Index creation** - Creates performance indexes automatically
+- **Cross-database compatibility** - Same code works with all databases
+- **Environment-based switching** - Easy switching via .env file
+- **Error handling** - Comprehensive error messages and troubleshooting tips
+
+## Architecture Overview
 
 ### SOLID Principles Implementation
 
@@ -23,6 +83,7 @@ This application processes invoices from Excel files and provides flexible expor
 - `InvoiceService` orchestrates business logic
 - Repositories handle only data access
 - `PhpSpreadsheetReader` handles only Excel file parsing
+- `DatabaseSetup` handles only database initialization
 
 #### 2. **Open/Closed Principle (OCP)**
 - The system is open for extension but closed for modification
@@ -35,12 +96,13 @@ This application processes invoices from Excel files and provides flexible expor
 - All repository implementations can be substituted without breaking the application
 - `FlexibleCustomerRepository` works with any database adapter seamlessly
 - Different database adapters can be swapped without changing repository code
-- Same repository works with SQLite, MySQL, MongoDB, Redis, Neo4j, etc.
+- Same repository works with SQLite, MySQL, MongoDB, etc.
 
 #### 4. **Interface Segregation Principle (ISP)**
 - Interfaces are specific to client needs
 - `CustomerRepositoryInterface` extends `RepositoryInterface` with customer-specific methods
 - `ExportStrategyInterface` focuses only on export operations
+- `DatabaseAdapterInterface` abstracts only database operations
 
 #### 5. **Dependency Inversion Principle (DIP)**
 - High-level modules depend on abstractions, not concretions
@@ -48,7 +110,7 @@ This application processes invoices from Excel files and provides flexible expor
 - Commands depend on service interfaces, not concrete services
 - Dependency injection container manages all dependencies
 
-## Design Patterns Implemented
+## 🎨 Design Patterns Implemented
 
 ### 1. **Strategy Pattern**
 - **Export Strategies**: `JsonExportStrategy`, `XmlExportStrategy`
@@ -57,7 +119,7 @@ This application processes invoices from Excel files and provides flexible expor
 
 ### 2. **Factory Pattern**
 - **ConnectionFactory**: Creates different database connections
-- Supports SQLite, MySQL, PostgreSQL
+- Supports SQLite, MySQL, MongoDB
 - Easy to extend for new database types
 
 ### 3. **Adapter Pattern**
@@ -82,79 +144,134 @@ This application processes invoices from Excel files and provides flexible expor
 - Automatic resolution of dependencies
 - Singleton pattern for shared instances
 
-##  Project Structure
+## Project Structure
 
 ```
 invoice-processor/
 ├──  bin/                     # Command line tools
 │   └── console                 # Main CLI entry point
-├──  database/                # Database setup and files
-│   └── setup.php              # Database initialization
+├──  database/                # Database files (auto-created)
 ├──  public/                  # Web interface
 │   └── index.php              # Web entry point
 ├──  src/                     # Main application code
 │   ├──  Commands/           # CLI commands
+│   │   ├── SetupDatabaseCommand.php  # Dynamic database setup
+│   │   ├── SwitchDatabaseCommand.php # Database switching
+│   │   ├── ImportCommand.php         # Data import
+│   │   └── ExportCommand.php         # Data export
 │   ├──  Contracts/          # Interfaces and contracts
+│   │   ├── Commands/        # Command interfaces
+│   │   ├── Database/        # Database interfaces
+│   │   ├── Export/          # Export strategy interfaces
+│   │   ├── Import/          # Import strategy interfaces
+│   │   ├── Repositories/    # Repository interfaces
+│   │   └── Services/        # Service interfaces
 │   ├──  Core/               # Core framework classes
+│   │   ├── DatabaseSetup.php        # Dynamic database setup
+│   │   ├── DatabaseManager.php      # Database management
+│   │   ├── DynamicEnvironmentLoader.php # Environment management
+│   │   ├── Container.php            # Dependency injection
+│   │   ├── CommandHandler.php       # Command handling
+│   │   └── Router.php               # Web routing
 │   ├──  Database/           # Database layer
-│   │   └──  Adapters/       # Database adapters (SqliteAdapter, MysqlAdapter, MongoDbAdapter)
+│   │   ├── Adapters/       # Database adapters
+│   │   │   ├── SqliteAdapter.php
+│   │   │   ├── MysqlAdapter.php
+│   │   │   └── MongoDbAdapter.php
+│   │   └── Connection.php   # Database connection
 │   ├──  Export/             # Export strategies
-│   ├──  Import/             # Import strategies (PhpSpreadsheetReader)
+│   │   ├── JsonExportStrategy.php
+│   │   └── XmlExportStrategy.php
+│   ├──  Import/             # Import strategies
+│   │   ├── ExcelImportStrategy.php
+│   │   └── PhpSpreadsheetReader.php
 │   ├──  Models/             # Data models
-│   ├──  Repositories/       # Data access layer (FlexibleCustomerRepository)
-│   └──  Services/           # Business logic
-├──  tests/                   # Unit tests
-├──  vendor/                  # Composer dependencies
-├──  .gitignore              # Git ignore rules
-├──  composer.json           # Project dependencies
-├──  composer.lock           # Locked dependency versions
-├──  data.xlsx               # Sample Excel data
-├──  erd.md                  # Database design documentation
-├──  MTS-invoice-erd.png     # ERD diagram
-├──  phpunit.xml             # PHPUnit configuration
-└──  README.md               # Project documentation
+│   │   ├── Customer.php
+│   │   ├── Invoice.php
+│   │   └── Product.php
+│   ├──  Repositories/       # Data access layer
+│   │   ├── AbstractRepository.php
+│   │   ├── FlexibleCustomerRepository.php
+│   │   ├── FlexibleInvoiceRepository.php
+│   │   └── FlexibleProductRepository.php
+│   ├──  Services/           # Business logic
+│   │   ├── ExportService.php
+│   │   ├── ImportService.php
+│   │   └── InvoiceService.php
+│   └──  Controllers/        # Web controllers
+│       └── InvoiceController.php
+├──  tests/                  # Unit tests
+├──  config/                 # Configuration files
+│   └── database.php         # Database configuration
+├──  .env                    # Environment variables
+├──  env.example             # Environment template
+├──  composer.json           # Dependencies
+└──  README.md               # This file
 ```
 
-## 🚀 Quick Start
+## Installation & Setup
 
 ### Prerequisites
-- PHP 8.0+
+- PHP 8.0 or higher
 - Composer
-- SQLite (or MySQL/x)
+- Web server (Apache/Nginx) or PHP built-in server
+- MySQL (optional, for MySQL database)
+- MongoDB (optional, for MongoDB database)
 
-### Installation
+### Installation Steps
 
 1. **Clone the repository**
-```bash
-git clone <repository-url>
-cd invoice-processor
-```
+   ```bash
+   git clone <repository-url>
+   cd invoice-processor
+   ```
 
 2. **Install dependencies**
    ```bash
    composer install
    ```
 
-3. **Setup database**
+3. **Setup database (Dynamic)**
    ```bash
-php database/setup.php
-```
+   # Setup database based on .env configuration
+   php bin/console setup-database
+   ```
 
 4. **Import sample data**
-```bash
-php bin/console import data.xlsx
-```
+   ```bash
+   php bin/console import data.xlsx
+   ```
 
 5. **Export data**
-```bash
-# Export to JSON
-php bin/console export json
+   ```bash
+   # Export to JSON
+   php bin/console export json
+   
+   # Export to XML
+   php bin/console export xml
+   ```
 
-# Export to XML
-php bin/console export xml
-```
+6. **Database switching (Optional)**
+   ```bash
+   # Switch to MySQL
+   php bin/console switch-database mysql
+   php bin/console setup-database
+   
+   # Switch to MongoDB
+   php bin/console switch-database mongodb
+   php bin/console setup-database
+   
+   # Switch back to SQLite
+   php bin/console switch-database sqlite
+   php bin/console setup-database
+   ```
 
-## 📊 Excel Import Features
+7. **Start web server**
+   ```bash
+   php -S localhost:8000 -t public
+   ```
+
+## Excel Import Features
 
 ### Professional Excel Processing with PhpSpreadsheet
 - **PhpSpreadsheet Library** - Industry-standard Excel processing library
@@ -173,32 +290,30 @@ php bin/console export xml
 -  Comprehensive error handling and validation
 -  Memory-efficient processing for large files
 
-### PhpSpreadsheet Implementation Benefits
-- **🔧 Professional Library** - Industry-standard Excel processing
-- **⚡ Performance** - Optimized for large Excel files
-- **🛡️ Reliability** - Comprehensive error handling and validation
-- **📅 Date Handling** - Automatic Excel date conversion
-- **🧹 Memory Management** - Proper resource cleanup
-- **🔍 Flexible Headers** - Handles column name variations and typos
-
-### Technical Implementation
-The `PhpSpreadsheetReader` class provides:
-- **File Validation** - Checks file existence and supported formats
-- **Header Detection** - Flexible column name matching with typo tolerance
-- **Data Processing** - Efficient row-by-row processing with memory management
-- **Date Conversion** - Automatic Excel timestamp to PHP date conversion
-- **Error Handling** - Comprehensive validation and clear error messages
-
 ## 🔧 Usage Examples
 
-### Truly Flexible Database Architecture
+### Available Commands
 
-The project now uses a **database-agnostic repository pattern** with adapters, eliminating the need for database-specific repository names.
+```bash
+# Database Management
+php bin/console setup-database          # Setup database based on .env
+php bin/console switch-database mysql   # Switch to MySQL
+php bin/console switch-database sqlite  # Switch to SQLite
+php bin/console switch-database mongodb # Switch to MongoDB
 
+# Data Operations
+php bin/console import data.xlsx        # Import Excel data
+php bin/console export json             # Export to JSON
+php bin/console export xml              # Export to XML
 
+# Help
+php bin/console                        # Show all available commands
 ```
 
-```
+### API Endpoints
+
+- `GET /api/invoices` - List all invoices with customer details
+- `GET /api/invoices/{id}` - Get specific invoice with items and customer details
 
 ### Adding New Export Format
 
@@ -240,11 +355,6 @@ class CsvImportStrategy implements ImportStrategyInterface
     {
         return pathinfo($filePath, PATHINFO_EXTENSION) === 'csv';
     }
-    
-    public function getSupportedExtensions(): array
-    {
-        return ['csv'];
-    }
 }
 
 // Register the new strategy
@@ -252,77 +362,136 @@ $importService = $container->resolve(ImportService::class);
 $importService->registerStrategy(new CsvImportStrategy());
 ```
 
-## CLI Commands
+### Adding New Database Type
 
-```bash
-# Export invoices to JSON
-php bin/console export json
+```php
+class PostgresAdapter implements DatabaseAdapterInterface
+{
+    // PostgreSQL implementation
+}
 
-# Export invoices to XML
-php bin/console export xml
-
-# Import from Excel file
-php bin/console import data.xlsx
-```
-## Web Interface
-
-Access the web interface to view and export data:
-
-```bash
-# Start PHP development server
-php -S localhost:8000 -t public
-
-# Visit in browser
-http://localhost:8000
+// Register in DatabaseManager
+public function createPostgresAdapter(array $config): DatabaseAdapterInterface
+{
+    // PostgreSQL adapter creation
+}
 ```
 
-##  Testing
+## Testing
 
-The application includes comprehensive tests:
+### Running Tests
 
 ```bash
 # Run all tests
 vendor/bin/phpunit
 
-# Run specific test suite
-vendor/bin/phpunit --testsuite Import
-vendor/bin/phpunit --testsuite Services
-vendor/bin/phpunit --testsuite Database
+# Run specific test
+vendor/bin/phpunit tests/Import/PhpSpreadsheetReaderTest.php
 ```
 
-##  Benefits of This Architecture
+### Available Tests
 
-1. ** Flexibility**: Easy to switch between different databases, export formats, and import formats
-2. ** Maintainability**: Clear separation of concerns and single responsibilities
-3. ** Testability**: Dependencies are injected and can be easily mocked
-4. ** Extensibility**: New features can be added without modifying existing code
-5. ** Scalability**: Architecture supports growth and complexity
-6. ** Excel Processing**: Professional Excel reading using PhpSpreadsheet library
-7. ** Error Handling**: Robust error handling and validation
+- `PhpSpreadsheetReaderTest` - Excel file reading functionality
+- `InvoiceServiceTest` - Business logic testing
+- `ConnectionTest` - Database connection testing
+- `DatabaseFlexibilityTest` - Cross-database compatibility
 
-## 🔄 Migration from Old Architecture
+##  Database Flexibility
 
-The refactoring addressed these specific issues:
+### Truly Database-Agnostic Architecture
 
-1. ** Tight Coupling**: Commands were directly instantiating repositories and database connections
-2. ** LSP Violations**: No interface contracts for repositories and services
-3. ** DIP Violations**: High-level modules depended on concrete implementations
-4. ** Poor Flexibility**: Hard to switch databases or add new export/import formats
-5. ** Missing Patterns**: No use of proven design patterns for common problems
+The project uses a **database-agnostic repository pattern** with adapters, eliminating the need for database-specific repository names.
 
-## ✨ Key Improvements
 
-- ** Truly Flexible Database Architecture**: Database-agnostic repositories with adapter pattern
-- ** SOLID Principles**: All five principles properly implemented
-- ** Adapter Pattern**: Eliminates database-specific repository names
-- ** Database-Agnostic Code**: Same repository works with SQLite, MySQL, MongoDB, Redis, Neo4j, etc.
-- ** Design Patterns**: Strategy, Factory, Repository, Command, DI patterns
-- ** Interface Contracts**: Clear interfaces for all major components
-- ** Dependency Injection**: Automatic dependency resolution
-- ** Database Flexibility**: Easy to switch between SQLite, MySQL, PostgreSQL, MongoDB
-- ** Format Flexibility**: Easy to add new export/import formats
-- ** Excel Processing**: Professional Excel file reading using PhpSpreadsheet
-- ** Testability**: All components can be easily unit tested
-- ** Maintainability**: Clear separation of concerns and responsibilities
-- ** Clean Code**: No unnecessary files, proper structure
+```php
+// Single repository works with any database
+class FlexibleCustomerRepository implements CustomerRepositoryInterface
+{
+    public function __construct(DatabaseAdapterInterface $adapter)
+    {
+        // Works with SQLite, MySQL, MongoDB, PostgreSQL, etc.
+    }
+}
+```
+
+### Benefits
+
+- **Zero Code Changes** - Switch databases by updating `.env` only
+- **No Database-Specific Names** - Repositories don't contain database names
+- **Easy Testing** - Mock any database adapter for testing
+- **Future-Proof** - Add new databases without changing existing code
+- **Consistent API** - Same methods work across all databases
+
+## Configuration
+
+### Environment Variables
+
+```env
+# Database Configuration
+DB_TYPE=sqlite                    # sqlite, mysql, mongodb
+DB_DATABASE=invoices             # Database name
+DB_HOST=localhost                # Database host
+DB_PORT=3306                     # Database port
+DB_USERNAME=root                 # Database username
+DB_PASSWORD=                     # Database password
+
+# Application Configuration
+APP_NAME="Invoice Processor"
+APP_ENV=development
+APP_DEBUG=true
+
+# Server Configuration
+SERVER_HOST=localhost
+SERVER_PORT=8000
+```
+
+### Database Configuration
+
+The `config/database.php` file contains all database connection configurations:
+
+```php
+return [
+    'default' => env('DB_TYPE', 'sqlite'),
+    'connections' => [
+        'sqlite' => [...],
+        'mysql' => [...],
+        'mongodb' => [...],
+    ]
+];
+```
+
+## Performance Features
+
+- **Database Indexing** - Automatic index creation for better performance
+- **Memory Management** - Efficient Excel file processing
+- **Connection Pooling** - Optimized database connections
+- **Caching Ready** - Architecture supports easy caching implementation
+
+## Security Features
+
+- **Input Validation** - Comprehensive data validation
+- **SQL Injection Prevention** - Parameterized queries
+- **Error Handling** - Secure error messages
+- **Environment Separation** - Development/production configuration
+
+## Scalability
+
+- **Horizontal Scaling** - Stateless architecture
+- **Database Sharding** - Adapter pattern supports multiple databases
+- **Microservice Ready** - Clean separation of concerns
+- **API-First Design** - RESTful endpoints for integration
+
+
+## Project Goals Achieved
+
+**SOLID Principles** - All five principles properly implemented  
+**Design Patterns** - Strategy, Factory, Repository, Command, DI, Adapter  
+**Excel Processing** - Professional PhpSpreadsheet integration  
+**Database Flexibility** - Truly database-agnostic architecture  
+**Dynamic Setup** - Automatic database creation and configuration  
+**Clean Architecture** - Well-structured, testable, maintainable code  
+**Professional Quality** - Production-ready with comprehensive error handling  
+**Documentation** - Complete documentation and examples  
+
+
 

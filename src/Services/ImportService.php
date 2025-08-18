@@ -102,6 +102,7 @@ class ImportService
             $this->invoiceRepository->addItem($currentInvoice, [
                 'product_id' => $product->getId(),
                 'quantity' => $row['Quantity'],
+                'price' => $row['Price'],
                 'total' => $row['Total']
             ]);
             

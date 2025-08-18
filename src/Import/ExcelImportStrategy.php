@@ -14,9 +14,16 @@ class ExcelImportStrategy implements ImportStrategyInterface
      */
     public function import(string $filePath): array
     {
-        $reader = new PhpSpreadsheetReader();
+        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
         
-        // Read the data using PhpSpreadsheet
+        // Use CSV reader for CSV files (when ZipArchive is not available)
+        if ($extension === 'csv') {
+            $reader = new SimpleCsvReader();
+        } else {
+            $reader = new PhpSpreadsheetReader();
+        }
+        
+        // Read the data
         $data = $reader->read($filePath);
         
         // Process and clean the data

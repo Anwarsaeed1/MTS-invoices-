@@ -3,6 +3,7 @@
 namespace AnwarSaeed\InvoiceProcessor\Core;
 
 use AnwarSaeed\InvoiceProcessor\Contracts\Database\ConnectionInterface;
+use AnwarSaeed\InvoiceProcessor\Contracts\Database\DatabaseAdapterInterface;
 use AnwarSaeed\InvoiceProcessor\Contracts\Repositories\{
     CustomerRepositoryInterface,
     InvoiceRepositoryInterface,
@@ -10,10 +11,12 @@ use AnwarSaeed\InvoiceProcessor\Contracts\Repositories\{
 };
 use AnwarSaeed\InvoiceProcessor\Contracts\Services\InvoiceServiceInterface;
 use AnwarSaeed\InvoiceProcessor\Database\Connection;
+use AnwarSaeed\InvoiceProcessor\Database\Adapters\SqliteAdapter;
+use AnwarSaeed\InvoiceProcessor\Core\DatabaseManager;
 use AnwarSaeed\InvoiceProcessor\Repositories\{
-    CustomerRepository,
-    InvoiceRepository,
-    ProductRepository
+    FlexibleCustomerRepository,
+    FlexibleProductRepository,
+    FlexibleInvoiceRepository
 };
 use AnwarSaeed\InvoiceProcessor\Services\{
     InvoiceService,
@@ -25,37 +28,56 @@ class Container
 {
     private array $bindings = [];
     private array $instances = [];
+    private DynamicEnvironmentLoader $envLoader;
 
     public function __construct()
     {
+        // Load environment variables dynamically
+        $this->envLoader = new DynamicEnvironmentLoader();
+        
         $this->registerDefaultBindings();
     }
 
     /**
      * Registers the default bindings for the container.
      *
-     * These bindings include the database connection, repositories, and services.
+     * These bindings include the database connection, adapters, flexible repositories, and services.
+     * Now using database-agnostic repositories with adapter pattern for maximum flexibility.
      *
      * @return void
      */
     private function registerDefaultBindings(): void
     {
+        // Database manager for automatic database detection and switching
+        $this->bind(DatabaseManager::class, function () {
+            return new DatabaseManager();
+        });
+
         // Database connection
         $this->bind(ConnectionInterface::class, function () {
             return new Connection("sqlite:" . __DIR__ . "/../../database/invoices.db");
         });
 
-        // Repositories
+        // Database adapter (automatically detected and created)
+        $this->bind(DatabaseAdapterInterface::class, function () {
+            $dbManager = $this->resolve(DatabaseManager::class);
+            return $dbManager->createAdapter();
+        });
+
+        // Flexible repositories (database-agnostic)
         $this->bind(CustomerRepositoryInterface::class, function () {
-            return new CustomerRepository($this->resolve(ConnectionInterface::class));
+            $adapter = $this->resolve(DatabaseAdapterInterface::class);
+            return new FlexibleCustomerRepository($adapter, 'customers');
         });
 
         $this->bind(ProductRepositoryInterface::class, function () {
-            return new ProductRepository($this->resolve(ConnectionInterface::class));
+            $adapter = $this->resolve(DatabaseAdapterInterface::class);
+            return new FlexibleProductRepository($adapter, 'products');
         });
 
         $this->bind(InvoiceRepositoryInterface::class, function () {
-            return new InvoiceRepository($this->resolve(ConnectionInterface::class));
+            $adapter = $this->resolve(DatabaseAdapterInterface::class);
+            return new FlexibleInvoiceRepository($adapter, 'invoices');
         });
 
         // Services
@@ -97,7 +119,6 @@ class Container
         $this->bindings[$abstract] = $concrete;
     }
 
-
     /**
      * Resolve the concrete implementation for the given abstract and return a singleton instance.
      *
@@ -136,5 +157,54 @@ class Container
     public function make(string $abstract): object
     {
         return $this->resolve($abstract);
+    }
+
+    /**
+     * Switch database adapter for all repositories.
+     * This allows easy switching between different database types.
+     *
+     * @param DatabaseAdapterInterface $adapter The new database adapter
+     * @return void
+     */
+    public function switchDatabaseAdapter(DatabaseAdapterInterface $adapter): void
+    {
+        // Clear existing instances to force recreation with new adapter
+        unset($this->instances[DatabaseAdapterInterface::class]);
+        unset($this->instances[CustomerRepositoryInterface::class]);
+        unset($this->instances[ProductRepositoryInterface::class]);
+        unset($this->instances[InvoiceRepositoryInterface::class]);
+        unset($this->instances[ExportService::class]);
+        unset($this->instances[ImportService::class]);
+        unset($this->instances[InvoiceServiceInterface::class]);
+
+        // Rebind the adapter
+        $this->bind(DatabaseAdapterInterface::class, function () use ($adapter) {
+            return $adapter;
+        });
+    }
+
+    /**
+     * Switch database type for all repositories.
+     * This allows easy switching between different database types using DatabaseManager.
+     *
+     * @param string $dbType The database type to switch to (sqlite, mysql, mongodb)
+     * @return void
+     */
+    public function switchDatabaseType(string $dbType): void
+    {
+        $dbManager = $this->resolve(DatabaseManager::class);
+        $adapter = $dbManager->switchDatabase($dbType);
+        $this->switchDatabaseAdapter($adapter);
+    }
+
+    /**
+     * Get current database information
+     *
+     * @return array Database information
+     */
+    public function getDatabaseInfo(): array
+    {
+        $dbManager = $this->resolve(DatabaseManager::class);
+        return $dbManager->getDatabaseInfo();
     }
 }

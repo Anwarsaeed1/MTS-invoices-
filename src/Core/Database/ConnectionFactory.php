@@ -43,14 +43,14 @@ class ConnectionFactory
         return new Connection($dsn, $username, $password, $options);
     }
     
-    public static function createPostgres(
+    public static function createMongoDb(
         string $host,
         string $database,
-        string $username,
-        string $password,
+        string $username = '',
+        string $password = '',
         array $options = []
     ): ConnectionInterface {
-        $dsn = "pgsql:host={$host};dbname={$database}";
+        $dsn = "mongodb://{$host}/{$database}";
         return new Connection($dsn, $username, $password, $options);
     }
 }
