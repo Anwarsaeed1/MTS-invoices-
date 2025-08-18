@@ -11,16 +11,12 @@ use AnwarSaeed\InvoiceProcessor\Exceptions\{
     InvoiceNotFoundException,
     ImportException
 };
-use AnwarSaeed\InvoiceProcessor\Repositories\FlexibleCustomerRepository;
-use AnwarSaeed\InvoiceProcessor\Repositories\FlexibleInvoiceRepository;
-use AnwarSaeed\InvoiceProcessor\Repositories\FlexibleProductRepository;
-
 class InvoiceService implements InvoiceServiceInterface
 {
     public function __construct(
-        private FlexibleInvoiceRepository $invoiceRepo,
-        private FlexibleCustomerRepository $customerRepo,
-        private FlexibleProductRepository $productRepo,
+        private InvoiceRepositoryInterface $invoiceRepo,
+        private CustomerRepositoryInterface $customerRepo,
+        private ProductRepositoryInterface $productRepo,
         private ExportService $exportService,
         private ImportService $importService
     ) {}

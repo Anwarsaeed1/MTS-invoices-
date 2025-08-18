@@ -46,38 +46,32 @@ class InvoiceServiceTest extends TestCase
     public function testGetPaginatedInvoices(): void
     {
         // Arrange
-        $expectedData = [
-            'data' => [
-                [
-                    'id' => 1,
-                    'invoice_date' => '2024-01-15',
-                    'customer_id' => 1,
-                    'grand_total' => 100.00,
-                    'customer_name' => 'John Doe'
-                ]
-            ],
-            'meta' => [
-                'total' => 1,
-                'page' => 1,
-                'per_page' => 20,
-                'last_page' => 1
-            ]
-        ];
-
+        $customer = new Customer(1, 'John Doe', '123 Main St');
+        $invoice = new Invoice(1, new \DateTime('2024-01-15'), $customer, 100.00);
+        
         $this->mockInvoiceRepo
             ->expects($this->once())
             ->method('paginate')
             ->with(1, 20)
-            ->willReturn($expectedData);
+            ->willReturn([$invoice]);
+
+        $this->mockCustomerRepo
+            ->expects($this->once())
+            ->method('findById')
+            ->with(1)
+            ->willReturn($customer);
 
         // Act
         $result = $this->invoiceService->getPaginatedInvoices(1, 20);
 
         // Assert
-        $this->assertEquals($expectedData, $result);
-        $this->assertArrayHasKey('data', $result);
-        $this->assertArrayHasKey('meta', $result);
-        $this->assertCount(1, $result['data']);
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertEquals(1, $result[0]['id']);
+        $this->assertEquals('2024-01-15', $result[0]['date']);
+        $this->assertEquals(100.00, $result[0]['grand_total']);
+        $this->assertArrayHasKey('customer', $result[0]);
+        $this->assertEquals('John Doe', $result[0]['customer']['name']);
     }
 
     public function testGetInvoiceDetailsThrowsExceptionWhenInvoiceNotFound(): void
